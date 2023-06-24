@@ -1,6 +1,8 @@
 const std = @import("std");
 const lexer = @import("lexer.zig");
 
+const Parser = struct {};
+
 fn collectArgs(args: *std.ArrayList([]const u8)) !void {
     var args_iter = try std.process.argsWithAllocator(args.allocator);
     while (args_iter.next()) |arg| {
