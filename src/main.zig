@@ -211,7 +211,7 @@ pub fn main() !void {
             continue;
         };
 
-        var parser = Parser.init(tokens.items, allocator);
+        var parser = Parser.init(tokens.items[0 .. tokens.items.len - 1], allocator);
 
         while (parser.parse()) |expr| {
             try printExpr(stdout, expr);
