@@ -9,7 +9,6 @@ pub const LexerError = error{
 
 pub const TokenKind = enum {
     Symbol,
-    EqualOperator,
     LambdaBegin,
     LambdaDot,
     ApplicationOpen,
