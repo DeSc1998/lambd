@@ -14,22 +14,14 @@ pub const ParserError = lexer.LexerError || pError;
 pub const Parser = struct {
     current_position: u64,
     tokens: []const lexer.Token,
-    allocator: std.mem.Allocator,
-    // TODO: `Parser` currently relies on 'big' capacity of `exprs`
-    //      In `Expression` we may want to use relative pointers
-    exprs: std.ArrayList(expr.Expression),
 
     const Kind = lexer.TokenKind;
-    const App = expr.AppExpr(expr.Expression);
-    const Lambda = expr.LambdaExpr(expr.Expression);
     const Self = @This();
 
-    pub fn init(tokens: []const lexer.Token, alloc: std.mem.Allocator) Self {
+    pub fn init(tokens: []const lexer.Token) Self {
         return Self{
             .current_position = 0,
             .tokens = tokens,
-            .allocator = alloc,
-            .exprs = std.ArrayList(expr.Expression).init(alloc),
         };
     }
 
@@ -46,6 +38,21 @@ pub const Parser = struct {
             self.current_position += 1;
             return self.tokens[self.current_position - 1];
         } else {
+            const stdout_file = std.io.getStdOut().writer();
+            var bw = std.io.bufferedWriter(stdout_file);
+            const out = bw.writer();
+
+            out.print("ERROR: {}\n", .{ParserError.UnexpectedToken}) catch return ParserError.UnknownError;
+            out.print("    expected token of kind {}\n", .{kind}) catch return ParserError.UnknownError;
+            const token = self.tokens[self.current_position];
+            out.print("    but got {} ('{s}') at {}:{}\n", .{
+                token.kind,
+                token.chars,
+                token.line,
+                token.char,
+            }) catch return ParserError.UnknownError;
+            bw.flush() catch return ParserError.UnknownError;
+
             return ParserError.UnexpectedToken;
         }
     }
@@ -54,48 +61,32 @@ pub const Parser = struct {
         return if (self.current_position < self.tokens.len) self.tokens[self.current_position] else null;
     }
 
-    fn parseVariable(self: *Self) ParserError!*expr.Expression {
+    fn parseVariable(self: *Self) ParserError!usize {
         const t = try self.expect(Kind.Symbol); // TODO: `Token` needs more metadata for better error reporting
-        var tmp: *expr.Expression = self.exprs.addOne() catch {
+        return expr.Expression.addVariable(t.chars) catch {
             return ParserError.MemoryFailure;
         };
-        tmp.* = .{ .variable = expr.VarExpr{
-            .name = t.chars,
-        } };
-        return tmp;
     }
 
-    fn parseApplication(self: *Self) ParserError!*expr.Expression {
+    fn parseApplication(self: *Self) ParserError!usize {
         _ = try self.expect(Kind.ApplicationOpen);
         const left = try self.parse();
         const right = try self.parse();
         _ = try self.expect(Kind.ApplicationClose);
-        var tmp: *expr.Expression = self.exprs.addOne() catch {
+        return expr.Expression.addApplication(left, right) catch
             return ParserError.MemoryFailure;
-        };
-        tmp.* = .{ .application = App{
-            .left = left,
-            .right = right,
-        } };
-        return tmp;
     }
 
-    fn parseLambda(self: *Self) ParserError!*expr.Expression {
+    fn parseLambda(self: *Self) ParserError!usize {
         _ = try self.expect(Kind.LambdaBegin);
         const v = try self.expect(Kind.Symbol);
         _ = try self.expect(Kind.LambdaDot);
         const e = try self.parse();
-        var tmp: *expr.Expression = self.exprs.addOne() catch {
+        return expr.Expression.addLambda(v.chars, e) catch
             return ParserError.MemoryFailure;
-        };
-        tmp.* = .{ .lambda = Lambda{
-            .boundVar = v.chars,
-            .body = e,
-        } };
-        return tmp;
     }
 
-    pub fn parse(self: *Self) ParserError!*expr.Expression {
+    pub fn parse(self: *Self) ParserError!usize {
         if (self.currentToken()) |token| {
             switch (token.kind) {
                 .Symbol => {
@@ -114,13 +105,5 @@ pub const Parser = struct {
         } else {
             return ParserError.EndOfFile;
         }
-    }
-
-    pub fn dumpExprs(self: *Self) []const expr.Expression {
-        return self.exprs.items;
-    }
-
-    pub fn deinit(self: *Self) void {
-        self.exprs.deinit();
     }
 };
