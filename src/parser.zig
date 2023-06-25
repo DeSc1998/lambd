@@ -104,7 +104,7 @@ pub const Parser = struct {
                     const out = bw.writer();
 
                     out.print("\nERROR: {}\n", .{ParserError.UnexpectedToken}) catch return ParserError.UnknownError;
-                    out.print("    expected token of kind {}, {} or {}\n", .{ .Symbol, .LambdaBegin, .ApplicationOpen }) catch return ParserError.UnknownError;
+                    out.print("    expected token of kind {}, {}(\\) or {}('(')\n", .{ .Symbol, .LambdaBegin, .ApplicationOpen }) catch return ParserError.UnknownError;
                     out.print("    but got {} ('{s}') at {}:{}\n", .{
                         token.kind,
                         token.chars,

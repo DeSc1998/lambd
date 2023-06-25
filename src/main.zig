@@ -49,13 +49,6 @@ pub fn main() !void {
             _ = try stdout.write("\n");
         } else |err| {
             try stdout.print("ERROR: {!}\n", .{err});
-            switch (err) {
-                error.UnexpectedToken => {
-                    const token = p.currentToken().?;
-                    try stdout.print("    at {}:{}: chars '{s}', kind: {}\n", .{ token.line, token.char, token.chars, token.kind });
-                },
-                else => {},
-            }
         }
 
         for (expr.exprs.items, 0..) |*e, idx| {
