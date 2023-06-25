@@ -1,6 +1,7 @@
 asdf(as as  )
 asdfa
-asdfasdf\a. \b. c
+asdfasdf
+((\a. \b. c (x y)) (z w))
 
 (\f.
     (f 3)
@@ -10,3 +11,9 @@ asdfasdf\a. \b. c
         ((asdf 
             (f 3)) 
         asdf)))
+((\f.
+    \f'. (f' (f 3))
+        \x. ((* 2) x))
+    \x. ((+ 5) x)
+)
+;()
