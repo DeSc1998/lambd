@@ -28,13 +28,13 @@ pub const Expression = union(enum) {
 
     fn apply(self: Self, expr: usize) !usize {
         std.debug.assert(self == .lambda);
-        std.debug.print("lambda:     {}\n", .{self});
-        std.debug.print("exprs size: {}\n", .{exprs.items.len});
+        //std.debug.print("lambda:     {}\n", .{self});
+        //std.debug.print("exprs size: {}\n", .{exprs.items.len});
         const e = exprs.items[self.lambda.body];
-        std.debug.print("body:       {}\n", .{e});
+        //std.debug.print("body:       {}\n", .{e});
         const idx = try e.substitut(self.lambda.boundVar, expr);
-        std.debug.print("index:      {}\n", .{idx});
-        std.debug.print("exprs size: {}\n", .{exprs.items.len});
+        //std.debug.print("index:      {}\n", .{idx});
+        //std.debug.print("exprs size: {}\n", .{exprs.items.len});
         return idx;
     }
 
@@ -106,9 +106,9 @@ pub const Expression = union(enum) {
         return switch (self) {
             .application => |a| switch (exprs.items[a.left]) {
                 .lambda => b: {
-                    std.debug.print("\n(eval) exprs size: {}\n", .{exprs.items.len});
+                    //std.debug.print("\n(eval) exprs size: {}\n", .{exprs.items.len});
                     const idx = exprs.items[a.left].apply(a.right) catch unreachable;
-                    std.debug.print("(eval) exprs size: {}\n", .{exprs.items.len});
+                    //std.debug.print("(eval) exprs size: {}\n", .{exprs.items.len});
                     const out = exprs.items[idx];
                     break :b out;
                 }, // TODO: might fail to allocate

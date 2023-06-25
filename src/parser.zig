@@ -42,7 +42,7 @@ pub const Parser = struct {
             var bw = std.io.bufferedWriter(stdout_file);
             const out = bw.writer();
 
-            out.print("ERROR: {}\n", .{ParserError.UnexpectedToken}) catch return ParserError.UnknownError;
+            out.print("\nERROR: {}\n", .{ParserError.UnexpectedToken}) catch return ParserError.UnknownError;
             out.print("    expected token of kind {}\n", .{kind}) catch return ParserError.UnknownError;
             const token = self.tokens[self.current_position];
             out.print("    but got {} ('{s}') at {}:{}\n", .{
@@ -98,7 +98,22 @@ pub const Parser = struct {
                 .ApplicationOpen => {
                     return self.parseApplication();
                 },
-                else => return ParserError.UnexpectedToken,
+                else => {
+                    const stdout_file = std.io.getStdOut().writer();
+                    var bw = std.io.bufferedWriter(stdout_file);
+                    const out = bw.writer();
+
+                    out.print("\nERROR: {}\n", .{ParserError.UnexpectedToken}) catch return ParserError.UnknownError;
+                    out.print("    expected token of kind {}, {} or {}\n", .{ .Symbol, .LambdaBegin, .ApplicationOpen }) catch return ParserError.UnknownError;
+                    out.print("    but got {} ('{s}') at {}:{}\n", .{
+                        token.kind,
+                        token.chars,
+                        token.line,
+                        token.char,
+                    }) catch return ParserError.UnknownError;
+                    bw.flush() catch return ParserError.UnknownError;
+                    return ParserError.UnexpectedToken;
+                },
             }
 
             return ParserError.NotImplemented;
