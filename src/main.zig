@@ -40,24 +40,26 @@ pub fn main() !void {
             continue;
         };
 
-        var p = parser.Parser.init(tokens.items[0 .. tokens.items.len - 1], allocator);
-        defer p.deinit();
+        var p = parser.Parser.init(tokens.items);
 
         while (p.parse()) |e| {
-            try expr.print(stdout, e);
+            try expr.print(stdout, &expr.exprs.items[e]);
+            _ = try stdout.write(" => ");
+            try expr.print(stdout, &expr.exprs.items[e].eval());
             _ = try stdout.write("\n");
         } else |err| {
             try stdout.print("ERROR: {!}\n", .{err});
             switch (err) {
                 error.UnexpectedToken => {
                     const token = p.currentToken().?;
-                    try stdout.print("    token: chars '{s}', kind: {}\n", .{ token.chars, token.kind });
+                    try stdout.print("    at {}:{}: chars '{s}', kind: {}\n", .{ token.line, token.char, token.chars, token.kind });
                 },
                 else => {},
             }
         }
 
-        for (p.dumpExprs()) |*e| {
+        for (expr.exprs.items, 0..) |*e, idx| {
+            _ = try stdout.print("{}: ", .{idx});
             try expr.print(stdout, e);
             _ = try stdout.write("\n");
         }
