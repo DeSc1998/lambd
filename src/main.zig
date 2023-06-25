@@ -33,7 +33,7 @@ pub fn main() !void {
         };
 
         // TODO: may need to change the limit to load a bigger file
-        const content = try cwd.readFileAlloc(allocator, arg, 1024 * 1024);
+        const content = cwd.readFileAlloc(allocator, arg, 1024 * 1024) catch unreachable;
         var lexa = lexer.Lexer.init(content);
         lexa.allTokens(&tokens) catch |err| {
             try stdout.print("ERROR: {!}\n", .{err});
@@ -49,12 +49,6 @@ pub fn main() !void {
             _ = try stdout.write("\n");
         } else |err| {
             try stdout.print("ERROR: {!}\n", .{err});
-        }
-
-        for (expr.exprs.items, 0..) |*e, idx| {
-            _ = try stdout.print("{}: ", .{idx});
-            try expr.print(stdout, e);
-            _ = try stdout.write("\n");
         }
     }
     try bw.flush(); // don't forget to flush!

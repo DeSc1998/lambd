@@ -107,11 +107,12 @@ pub const Expression = union(enum) {
             .application => |a| switch (exprs.items[a.left]) {
                 .lambda => b: {
                     //std.debug.print("\n(eval) exprs size: {}\n", .{exprs.items.len});
+                    // TODO: might fail to allocate
                     const idx = exprs.items[a.left].apply(a.right) catch unreachable;
                     //std.debug.print("(eval) exprs size: {}\n", .{exprs.items.len});
                     const out = exprs.items[idx];
                     break :b out;
-                }, // TODO: might fail to allocate
+                },
                 else => self,
             },
             else => |e| e,
