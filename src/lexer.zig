@@ -19,6 +19,8 @@ pub const TokenKind = enum {
 pub const Token = struct {
     chars: []const u8,
     kind: TokenKind,
+    line: u64,
+    char: u64,
 };
 
 pub const Lexer = struct {
@@ -57,10 +59,7 @@ pub const Lexer = struct {
         while (self.readChar()) |char| {
             if (!isSymbolChar(char)) {
                 self.current_position -= 1;
-                return .{
-                    .chars = self.data[pos..self.current_position],
-                    .kind = TokenKind.Symbol,
-                };
+                return self.newToken(self.data[pos..self.current_position], TokenKind.Symbol);
             }
         } else |err| {
             return err;
@@ -71,14 +70,29 @@ pub const Lexer = struct {
         var count: u64 = 0;
         for (0.., self.data) |idx, char| {
             if (idx >= self.current_position) {
-                return count;
+                break;
             }
 
             if (char == '\n') {
                 count += 1;
             }
         }
-        return count;
+        return count + 1;
+    }
+
+    fn charOfLine(self: Self) u64 {
+        var pos = self.current_position - 2;
+        while (self.data[pos] != '\n' and pos > 0) : (pos -= 1) {}
+        return self.current_position - pos - 1;
+    }
+
+    fn newToken(self: Self, chars: []const u8, kind: TokenKind) Token {
+        return .{
+            .chars = chars,
+            .kind = kind,
+            .line = self.countNewlines(),
+            .char = self.charOfLine(),
+        };
     }
 
     fn skipOne(self: *Self) LexerError!void {
@@ -123,34 +137,18 @@ pub const Lexer = struct {
             return err;
         };
         if (char == '\\') {
-            return .{
-                .chars = self.data[position..self.current_position],
-                .kind = TokenKind.LambdaBegin,
-            };
+            return self.newToken(self.data[position..self.current_position], .LambdaBegin);
         } else if (char == '.') {
-            return .{
-                .chars = self.data[position..self.current_position],
-                .kind = TokenKind.LambdaDot,
-            };
+            return self.newToken(self.data[position..self.current_position], .LambdaDot);
         } else if (char == '(') {
-            return .{
-                .chars = self.data[position..self.current_position],
-                .kind = TokenKind.ApplicationOpen,
-            };
+            return self.newToken(self.data[position..self.current_position], .ApplicationOpen);
         } else if (char == ')') {
-            return .{
-                .chars = self.data[position..self.current_position],
-                .kind = TokenKind.ApplicationClose,
-            };
+            return self.newToken(self.data[position..self.current_position], .ApplicationClose);
         } else if (isSymbolChar(char)) {
             self.current_position -= 1;
             return self.lexSymbol();
         } else {
-            const s = self.data[position..self.current_position];
-            return .{
-                .chars = s,
-                .kind = TokenKind.Unknown,
-            };
+            return self.newToken(self.data[position..self.current_position], .Unknown);
         }
 
         return LexerError.NotImplemented;
