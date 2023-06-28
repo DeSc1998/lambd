@@ -62,7 +62,7 @@ pub const Parser = struct {
     }
 
     fn parseVariable(self: *Self) ParserError!usize {
-        const t = try self.expect(Kind.Symbol); // TODO: `Token` needs more metadata for better error reporting
+        const t = try self.expect(Kind.Symbol);
         return expr.Expression.addVariable(t.chars) catch {
             return ParserError.MemoryFailure;
         };
