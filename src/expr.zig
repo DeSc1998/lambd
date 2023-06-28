@@ -85,9 +85,9 @@ pub const Expression = union(enum) {
         return switch (self) {
             .lambda => |l| b: {
                 if (other == .lambda) {
-                    const v = addVariable(l.boundVar) catch unreachable;
-                    const other_body = other.substitut(other.lambda.boundVar, v) catch unreachable;
-                    break :b exprs.items[l.body].eql(exprs.items[other_body]);
+                    const var_eql = std.mem.eql(u8, l.boundVar, other.lambda.boundVar);
+                    const body_eql = exprs.items[l.body].eql( exprs.items[other.lambda.body] );
+                    break :b var_eql and body_eql;
                 } else {
                     break :b false;
                 }
@@ -126,7 +126,7 @@ pub const Expression = union(enum) {
             .lambda => |l| if (!std.mem.eql(u8, l.boundVar, name)) b: {
                 const body = exprs.items[l.body];
                 break :b addLambda(l.boundVar, try body.substitut(name, expr));
-            } else indexOf( &self, exprs.items ) orelse 0,
+            } else indexOf(&self, exprs.items) orelse 0,
             .application => |a| b: {
                 const left = exprs.items[a.left];
                 const right = exprs.items[a.right];
@@ -144,14 +144,14 @@ pub const Expression = union(enum) {
                     const idx = exprs.items[a.left].apply(a.right) catch unreachable;
                     break :b idx;
                 },
-                else => indexOf( self, exprs.items ) orelse 0,
+                else => indexOf(self, exprs.items) orelse 0,
             },
             .lambda => |l| b: {
                 const body = exprs.items[l.body];
                 const new_body = body.eval();
                 break :b addLambda(l.boundVar, new_body) catch unreachable;
             },
-            else => indexOf( self, exprs.items ) orelse 0,
+            else => indexOf(self, exprs.items) orelse 0,
         };
     }
 };
@@ -204,4 +204,3 @@ test "eval-simple_applicaton" {
     buf = stream.getWritten();
     try std.testing.expectEqualSlices(u8, expression, buf);
 }
-

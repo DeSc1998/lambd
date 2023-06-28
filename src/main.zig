@@ -35,11 +35,14 @@ pub fn main() !void {
         // TODO: may need to change the limit to load a bigger file
         const content = cwd.readFileAlloc(allocator, arg, 1024 * 1024) catch |err| {
             switch (err) {
-                .FileTooBig => {
+                error.FileTooBig => {
                     std.debug.print("ERROR: '{s}' is too big. \n", .{arg});
                     continue;
                 },
-                else => |e| return e,
+                else => |e| {
+                    try stdout.print("ERROR: {}", .{e});
+                    continue;
+                },
             }
         };
         var lexa = lexer.Lexer.init(content);
