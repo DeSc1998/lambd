@@ -54,10 +54,10 @@ pub fn main() !void {
         var p = parser.Parser.init(tokens.items);
 
         while (p.parse()) |e| {
-            try expr.print(stdout, &expr.exprs.items[e]);
+            try expr.print(stdout, expr.exprs.items[e]);
             _ = try stdout.write(" => ");
             const result = expr.exprs.items[e].eval();
-            try expr.print(stdout, &expr.exprs.items[result]);
+            try expr.print(stdout, expr.exprs.items[result]);
             _ = try stdout.write("\n");
         } else |err| {
             try stdout.print("ERROR: {!}\n", .{err});
