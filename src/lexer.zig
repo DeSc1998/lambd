@@ -81,7 +81,7 @@ pub const Lexer = struct {
     }
 
     fn charOfLine(self: Self) u64 {
-        var pos = self.current_position - 2;
+        var pos = self.current_position - 1;
         while (self.data[pos] != '\n' and pos > 0) : (pos -= 1) {}
         return self.current_position - pos - 1;
     }

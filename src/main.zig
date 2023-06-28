@@ -33,7 +33,15 @@ pub fn main() !void {
         };
 
         // TODO: may need to change the limit to load a bigger file
-        const content = cwd.readFileAlloc(allocator, arg, 1024 * 1024) catch unreachable;
+        const content = cwd.readFileAlloc(allocator, arg, 1024 * 1024) catch |err| {
+            switch (err) {
+                .FileTooBig => {
+                    std.debug.print("ERROR: '{s}' is too big. \n", .{arg});
+                    continue;
+                },
+                else => |e| return e,
+            }
+        };
         var lexa = lexer.Lexer.init(content);
         lexa.allTokens(&tokens) catch |err| {
             try stdout.print("ERROR: {!}\n", .{err});
@@ -45,11 +53,12 @@ pub fn main() !void {
         while (p.parse()) |e| {
             try expr.print(stdout, &expr.exprs.items[e]);
             _ = try stdout.write(" => ");
-            try expr.print(stdout, &expr.exprs.items[e].eval());
+            const result = expr.exprs.items[e].eval();
+            try expr.print(stdout, &expr.exprs.items[result]);
             _ = try stdout.write("\n");
         } else |err| {
             try stdout.print("ERROR: {!}\n", .{err});
         }
     }
-    try bw.flush(); // don't forget to flush!
+    try bw.flush();
 }

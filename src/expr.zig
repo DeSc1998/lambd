@@ -28,13 +28,8 @@ pub const Expression = union(enum) {
 
     fn apply(self: Self, expr: usize) !usize {
         std.debug.assert(self == .lambda);
-        //std.debug.print("lambda:     {}\n", .{self});
-        //std.debug.print("exprs size: {}\n", .{exprs.items.len});
         const e = exprs.items[self.lambda.body];
-        //std.debug.print("body:       {}\n", .{e});
         const idx = try e.substitut(self.lambda.boundVar, expr);
-        //std.debug.print("index:      {}\n", .{idx});
-        //std.debug.print("exprs size: {}\n", .{exprs.items.len});
         return idx;
     }
 
@@ -86,12 +81,52 @@ pub const Expression = union(enum) {
         return null;
     }
 
+    fn eql(self: Self, other: Self) bool {
+        return switch (self) {
+            .lambda => |l| b: {
+                if (other == .lambda) {
+                    const v = addVariable(l.boundVar) catch unreachable;
+                    const other_body = other.substitut(other.lambda.boundVar, v) catch unreachable;
+                    break :b exprs.items[l.body].eql(exprs.items[other_body]);
+                } else {
+                    break :b false;
+                }
+            },
+            .application => |app| b: {
+                if (other == .application) {
+                    const e = other.application;
+                    const left_eql = exprs.items[app.left].eql(exprs.items[e.left]);
+                    const right_eql = exprs.items[app.right].eql(exprs.items[e.right]);
+                    break :b left_eql and right_eql;
+                } else {
+                    break :b false;
+                }
+            },
+            .variable => |v| b: {
+                if (other == .variable) {
+                    break :b std.mem.eql(u8, v.name, other.variable.name);
+                } else {
+                    break :b false;
+                }
+            },
+        };
+    }
+
+    fn indexOf(target: *const Self, items: []const Expression) ?usize {
+        for (items, 0..) |expr, idx| {
+            if (expr.eql(target.*)) {
+                return idx;
+            }
+        }
+        return null;
+    }
+
     fn substitut(self: Self, name: []const u8, expr: usize) !usize {
         return switch (self) {
             .lambda => |l| if (!std.mem.eql(u8, l.boundVar, name)) b: {
                 const body = exprs.items[l.body];
                 break :b addLambda(l.boundVar, try body.substitut(name, expr));
-            } else @intFromPtr(&self) - @intFromPtr(&exprs.items[0]),
+            } else indexOf( &self, exprs.items ) orelse 0,
             .application => |a| b: {
                 const left = exprs.items[a.left];
                 const right = exprs.items[a.right];
@@ -101,21 +136,22 @@ pub const Expression = union(enum) {
         };
     }
 
-    pub fn eval(self: Self) Expression {
-        //std.debug.print("{}\n", .{self});
-        return switch (self) {
+    pub fn eval(self: *const Self) usize {
+        return switch (self.*) {
             .application => |a| switch (exprs.items[a.left]) {
                 .lambda => b: {
-                    //std.debug.print("\n(eval) exprs size: {}\n", .{exprs.items.len});
                     // TODO: might fail to allocate
                     const idx = exprs.items[a.left].apply(a.right) catch unreachable;
-                    //std.debug.print("(eval) exprs size: {}\n", .{exprs.items.len});
-                    const out = exprs.items[idx];
-                    break :b out;
+                    break :b idx;
                 },
-                else => self,
+                else => indexOf( self, exprs.items ) orelse 0,
             },
-            else => |e| e,
+            .lambda => |l| b: {
+                const body = exprs.items[l.body];
+                const new_body = body.eval();
+                break :b addLambda(l.boundVar, new_body) catch unreachable;
+            },
+            else => indexOf( self, exprs.items ) orelse 0,
         };
     }
 };
@@ -140,3 +176,32 @@ pub fn print(out: anytype, e: *const Expression) !void {
         },
     }
 }
+
+test "eval-simple_applicaton" {
+    const l = @import("lexer.zig");
+
+    const expression = "(a b)";
+    var tokens = std.ArrayList(l.Token).init(std.testing.allocator);
+    defer tokens.deinit();
+    var lexer = l.Lexer.init(expression);
+    try lexer.allTokens(&tokens);
+    var parser = @import("parser.zig").Parser.init(tokens.items);
+    var idx = try parser.parse();
+    const expr = exprs.items[idx];
+
+    // is input correctly parsed?
+    var inner: [16]u8 = undefined;
+    var stream = std.io.fixedBufferStream(&inner);
+    var writer = stream.writer();
+    try print(writer, &expr);
+    var buf = stream.getWritten();
+    try std.testing.expectEqualSlices(u8, expression, buf);
+
+    // is the expression correctly evaluated?
+    idx = expr.eval();
+    stream.reset();
+    try print(writer, &exprs.items[idx]);
+    buf = stream.getWritten();
+    try std.testing.expectEqualSlices(u8, expression, buf);
+}
+
