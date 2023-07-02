@@ -50,6 +50,10 @@ pub const Expression = union(enum) {
     }
 
     pub fn addLambda(v: []const u8, expr: usize) !usize {
+        if (findLambda(v, expr)) |idx| {
+            return idx;
+        }
+
         const idx = last_expr;
         last_expr += 1;
         var tmp = try exprs.addOne();
@@ -89,6 +93,16 @@ pub const Expression = union(enum) {
         return null;
     }
 
+    fn findLambda(v: []const u8, expr: usize) ?usize {
+        for (0.., exprs.items) |idx, item| {
+            switch (item) {
+                .lambda => |l| if (std.mem.eql(u8, v, l.boundVar) and l.body == expr) return idx,
+                else => {},
+            }
+        }
+        return null;
+    }
+
     fn findApplication(left: usize, right: usize) ?usize {
         for (0.., exprs.items) |idx, expr| {
             switch (expr) {
@@ -108,7 +122,7 @@ pub const Expression = union(enum) {
             .lambda => |l| b: {
                 if (other == .lambda) {
                     const var_eql = std.mem.eql(u8, l.boundVar, other.lambda.boundVar);
-                    const body_eql = exprs.items[l.body].eql(exprs.items[other.lambda.body]);
+                    const body_eql = l.body == other.lambda.body;
                     break :b var_eql and body_eql;
                 } else {
                     break :b false;
@@ -117,8 +131,8 @@ pub const Expression = union(enum) {
             .application => |app| b: {
                 if (other == .application) {
                     const e = other.application;
-                    const left_eql = exprs.items[app.left].eql(exprs.items[e.left]);
-                    const right_eql = exprs.items[app.right].eql(exprs.items[e.right]);
+                    const left_eql = app.left == e.left;
+                    const right_eql = app.right == e.right;
                     break :b left_eql and right_eql;
                 } else {
                     break :b false;
@@ -145,10 +159,11 @@ pub const Expression = union(enum) {
 
     fn substitut(self: Self, name: []const u8, expr: usize) !usize {
         return switch (self) {
+            // TODO: might have to address variable shadowing
             .lambda => |l| if (!std.mem.eql(u8, l.boundVar, name)) b: {
                 const body = exprs.items[l.body];
                 break :b addLambda(l.boundVar, try body.substitut(name, expr));
-            } else indexOf(self, exprs.items) orelse 0,
+            } else indexOf(self, exprs.items) orelse error.ExpressionNotFound,
             .application => |a| b: {
                 const left = exprs.items[a.left];
                 const right = exprs.items[a.right];
@@ -180,7 +195,7 @@ pub const Expression = union(enum) {
                 const new_body = body.eval();
                 break :b addLambda(l.boundVar, new_body) catch unreachable;
             },
-            .variable => |v| findVariable(v.name) orelse 0,
+            .variable => |v| findVariable(v.name) orelse exprs.items.len,
         };
     }
 };
@@ -203,6 +218,13 @@ pub fn print(out: anytype, e: Expression) !void {
             _ = try out.write(". ");
             try print(out, exprs.items[l.body]);
         },
+    }
+}
+
+pub fn printInternalExprs(writer: anytype) !void {
+    for (exprs.items) |expr| {
+        try print(writer, expr);
+        try writer.print("\n", .{});
     }
 }
 
@@ -265,6 +287,44 @@ test "eval-or" {
 
     var tokens = std.ArrayList(l.Token).init(std.testing.allocator);
     defer tokens.deinit();
+    var lexer = l.Lexer.init(expression);
+    try lexer.allTokens(&tokens);
+    var parser = @import("parser.zig").Parser.init(tokens.items);
+    var idx = try parser.parse();
+    const res = exprs.items[idx].eval();
+
+    var inner: [64]u8 = undefined;
+    var stream = std.io.fixedBufferStream(&inner);
+    var writer = stream.writer();
+
+    try print(writer, exprs.items[res]);
+    const buf = stream.getWritten();
+    try std.testing.expectEqualSlices(u8, expected, buf);
+}
+
+test "eval-nand-t f" {
+    const l = @import("lexer.zig");
+
+    // TODO: the position of bound variables seems to effect the result.
+    //      in theory it should not matter.
+    //      change 'x' and 'y' here in the 'nand'-binding and see
+    const expression =
+        \\(\true.
+        \\    (\false.
+        \\        (\not.
+        \\            (\nand.
+        \\                ((nand true) false)
+        \\            \x. \y. ( (y (not x)) true))
+        \\        \x. ((x false) true))
+        \\    \x. \y. y)
+        \\ \x. \y. x)
+    ;
+
+    const expected = "\\x. \\y. x";
+
+    var tokens = std.ArrayList(l.Token).init(std.testing.allocator);
+    defer tokens.deinit();
+
     var lexer = l.Lexer.init(expression);
     try lexer.allTokens(&tokens);
     var parser = @import("parser.zig").Parser.init(tokens.items);

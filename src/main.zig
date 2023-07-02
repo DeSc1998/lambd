@@ -55,7 +55,7 @@ pub fn main() !void {
 
         while (p.parse()) |e| {
             try expr.print(stdout, expr.exprs.items[e]);
-            _ = try stdout.write(" => ");
+            _ = try stdout.write("\n    => ");
             const result = expr.exprs.items[e].eval();
             try expr.print(stdout, expr.exprs.items[result]);
             _ = try stdout.write("\n");
@@ -63,5 +63,6 @@ pub fn main() !void {
             try stdout.print("ERROR: {!}\n", .{err});
         }
     }
+    // try expr.printInternalExprs(stdout);
     try bw.flush();
 }
