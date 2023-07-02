@@ -20,7 +20,6 @@ pub fn build(b: *std.Build) void {
 
     run_cmd.step.dependOn(&build_step.step);
 
-    run_cmd.addArg("lambd/test.txt");
     if (b.args) |args| {
         run_cmd.addArgs(args);
     }
