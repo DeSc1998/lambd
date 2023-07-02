@@ -55,4 +55,16 @@ examples:
 
 ## Basic Stuff
 
-TODO
+### Bindings
+
+If you have a large enough expression it might be useful to bind said expression to a variable to reuse it in a deeper context.
+The way you can do so is by wrapping the deeper context in to a lambda where the argument represents the expression and 
+apply your large expression to that lambda. example:
+
+```
+(\f. (f 15) \x. ((* ((* ((+ 3) 4)) x))))
+```
+
+here `f` is our representation for the expression and `(f x)` is the deeper context.
+
+*TODO: might have to add more stuff here* 
