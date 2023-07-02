@@ -1,0 +1,218 @@
+
+(\true.
+    (\false.
+        (\or.
+            ((or true) true)
+        \x. \y. ((x true) y))
+    \x. \y. y)
+\x. \y. x)
+
+(\true.
+    (\false.
+        (\or.
+            ((or true) false)
+        \x. \y. ((x true) y))
+    \x. \y. y)
+\x. \y. x)
+
+(\true.
+    (\false.
+        (\or.
+            ((or false) true)
+        \x. \y. ((x true) y))
+    \x. \y. y)
+\x. \y. x)
+
+(\true.
+    (\false.
+        (\or.
+            ((or false) false)
+        \x. \y. ((x true) y))
+    \x. \y. y)
+\x. \y. x)
+
+;
+
+(\true.
+    (\false.
+        (\and.
+            ((and true) true)
+        \x. \y. ((y x) false))
+    \x. \y. y)
+\x. \y. x)
+
+(\true.
+    (\false.
+        (\and.
+            ((and true) false)
+        \x. \y. ((y x) false))
+    \x. \y. y)
+\x. \y. x)
+
+(\true.
+    (\false.
+        (\and.
+            ((and false) true)
+        \x. \y. ((y x) false))
+    \x. \y. y)
+\x. \y. x)
+
+(\true.
+    (\false.
+        (\and.
+            ((and false) false)
+        \x. \y. ((y x) false))
+    \x. \y. y)
+\x. \y. x)
+;
+
+(\true.
+    (\false.
+        (\not.
+            (not false)
+        \x. ((x false) true))
+    \x. \y. y)
+\x. \y. x)
+
+(\true.
+    (\false.
+        (\not.
+            (not true)
+        \x. ((x false) true))
+    \x. \y. y)
+\x. \y. x)
+;
+
+(\true.
+    (\false.
+        (\not.
+            (\or.
+(\and.
+    ((and true) true)
+\x. \y. (not ((or (not x)) (not y))))
+
+            \x. \y. ((x true) y))
+        \x. ((x false) true))
+    \x. \y. y)
+\x. \y. x)
+
+(\true.
+    (\false.
+        (\not.
+            (\or.
+(\and.
+    ((and false) true)
+\x. \y. (not ((or (not x)) (not y))))
+
+            \x. \y. ((x true) y))
+        \x. ((x false) true))
+    \x. \y. y)
+\x. \y. x)
+
+(\true.
+    (\false.
+        (\not.
+            (\or.
+(\and.
+    ((and true) false)
+\x. \y. (not ((or (not x)) (not y))))
+
+            \x. \y. ((x true) y))
+        \x. ((x false) true))
+    \x. \y. y)
+\x. \y. x)
+
+(\true.
+    (\false.
+        (\not.
+            (\or.
+(\and.
+    ((and false) false)
+\x. \y. (not ((or (not x)) (not y))))
+
+            \x. \y. ((x true) y))
+        \x. ((x false) true))
+    \x. \y. y)
+\x. \y. x)
+;
+
+(\true.
+    (\false.
+        (\not.
+            (\nand.
+                ((nand true) true)
+            \x. \y. ( (y (not x)) true))
+        \x. ((x false) true))
+    \x. \y. y)
+\x. \y. x)
+
+(\true.
+    (\false.
+        (\not.
+            (\nand.
+                ((nand false) true)
+            \x. \y. ( (y (not x)) true))
+        \x. ((x false) true))
+    \x. \y. y)
+\x. \y. x)
+
+(\true.
+    (\false.
+        (\not.
+            (\nand.
+                ((nand true) false)
+            \x. \y. ( (y (not x)) true))
+        \x. ((x false) true))
+    \x. \y. y)
+\x. \y. x)
+
+(\true.
+    (\false.
+        (\not.
+            (\nand.
+                ((nand false) false)
+            \x. \y. ( (y (not x)) true))
+        \x. ((x false) true))
+    \x. \y. y)
+\x. \y. x)
+;
+
+(\true.
+    (\false.
+        (\not.
+            (\xor.
+                ((xor true) true)
+            \x. \y. ((x (not y)) y))
+        \x. ((x false) true))
+    \x. \y. y)
+\x. \y. x)
+
+(\true.
+    (\false.
+        (\not.
+            (\xor.
+                ((xor true) false)
+            \x. \y. ((x (not y)) y))
+        \x. ((x false) true))
+    \x. \y. y)
+\x. \y. x)
+
+(\true.
+    (\false.
+        (\not.
+            (\xor.
+                ((xor false) true)
+            \x. \y. ((x (not y)) y))
+        \x. ((x false) true))
+    \x. \y. y)
+\x. \y. x)
+
+(\true.
+    (\false.
+        (\not.
+            (\xor.
+                ((xor false) false)
+            \x. \y. ((x (not y)) y))
+        \x. ((x false) true))
+    \x. \y. y)
+\x. \y. x)
