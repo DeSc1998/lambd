@@ -1,7 +1,7 @@
 const std = @import("std");
-const lexer = @import("lexer.zig");
-const parser = @import("parser.zig");
-const expr = @import("expr.zig");
+const lexer = @import("untyped/lexer.zig");
+const parser = @import("untyped/parser.zig");
+const expr = @import("untyped/expr.zig");
 
 fn collectArgs(args: *std.ArrayList([]const u8)) !void {
     var args_iter = try std.process.argsWithAllocator(args.allocator);
