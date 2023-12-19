@@ -13,6 +13,13 @@ fn collectArgs(args: *std.ArrayList([]const u8)) !void {
 var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
 const allocator = arena.allocator();
 
+fn readWholeFile(filename: []const u8) ![]const u8 {
+    var cwd = std.fs.cwd();
+    const file = try cwd.openFile(filename, .{});
+    const stat = try file.stat();
+    return cwd.readFileAlloc(allocator, filename, stat.size);
+}
+
 pub fn main() !void {
     const stdout_file = std.io.getStdOut().writer();
     var bw = std.io.bufferedWriter(stdout_file);
@@ -32,19 +39,12 @@ pub fn main() !void {
             continue;
         };
 
-        // TODO: may need to change the limit to load a bigger file
-        const content = cwd.readFileAlloc(allocator, arg, 1024 * 1024) catch |err| {
-            switch (err) {
-                error.FileTooBig => {
-                    std.debug.print("ERROR: '{s}' is too big. \n", .{arg});
-                    continue;
-                },
-                else => |e| {
-                    try stdout.print("ERROR: {}", .{e});
-                    continue;
-                },
-            }
+        const content = readWholeFile(arg) catch |err| {
+            try stdout.print("ERROR: reading file: {}", .{err});
+            continue;
         };
+        defer allocator.free(content);
+
         var lexa = lexer.Lexer.init(content);
         lexa.allTokens(&tokens) catch |err| {
             try stdout.print("ERROR: {!}\n", .{err});
