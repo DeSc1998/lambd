@@ -302,7 +302,7 @@ test "eval-or" {
     try std.testing.expectEqualSlices(u8, expected, buf);
 }
 
-test "eval-nand-t f" {
+test "eval-nand-(t f)" {
     const l = @import("lexer.zig");
 
     // TODO: the position of bound variables seems to effect the result.

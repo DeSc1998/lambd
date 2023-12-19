@@ -16,9 +16,6 @@ pub fn build(b: *std.Build) void {
     });
 
     const run_cmd = b.addRunArtifact(exe);
-    // const build_step = b.addInstallArtifact(exe);
-
-    // run_cmd.step.dependOn(&build_step.step);
 
     if (b.args) |args| {
         run_cmd.addArgs(args);
@@ -27,23 +24,23 @@ pub fn build(b: *std.Build) void {
     const run_step = b.step("run", "Run the app");
     run_step.dependOn(&run_cmd.step);
 
-    //const tests_main = b.addTest(.{
-    //    .name = "main tests",
-    //    .root_source_file = .{ .path = "src/main.zig" },
-    //    .target = target,
-    //    .optimize = optimize,
-    //});
-    //const run_main_tests = b.addRunArtifact(tests_main);
-
-    const tests_expr = b.addTest(.{
+    const test_untyped_expr = b.addTest(.{
         .name = "expr tests",
-        .root_source_file = .{ .path = "src/expr.zig" },
+        .root_source_file = .{ .path = "src/untyped/expr.zig" },
         .target = target,
         .optimize = optimize,
     });
-    const run_expr_tests = b.addRunArtifact(tests_expr);
+    const run_untyped_expr_test = b.addRunArtifact(test_untyped_expr);
+
+    const test_typed_expr = b.addTest(.{
+        .name = "expr tests",
+        .root_source_file = .{ .path = "src/typed/expr.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+    const run_typed_expr_test = b.addRunArtifact(test_typed_expr);
 
     const test_step = b.step("test", "Run unit tests");
-    //test_step.dependOn(&run_main_tests.step);
-    test_step.dependOn(&run_expr_tests.step);
+    test_step.dependOn(&run_untyped_expr_test.step);
+    test_step.dependOn(&run_typed_expr_test.step);
 }
