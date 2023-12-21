@@ -9,7 +9,7 @@ $ zig build run -- file
 ```
 and replace `file` with the file you want to evaluate.
 
-NOTE: zig is still in beta. The version used is: `0.11.0-dev.3803+7ad104227`
+NOTE: zig is still in beta. The version used is: `0.11.0`
 
 ## Syntax
 
