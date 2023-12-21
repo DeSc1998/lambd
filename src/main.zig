@@ -20,6 +20,34 @@ fn readWholeFile(filename: []const u8) ![]const u8 {
     return cwd.readFileAlloc(allocator, filename, stat.size);
 }
 
+const Flags = struct {
+    simple_typed: bool = false,
+};
+
+fn argsToFlags(args: std.ArrayList([]const u8)) !Flags {
+    var flags = Flags{};
+    const stdout_file = std.io.getStdOut().writer();
+    var bw = std.io.bufferedWriter(stdout_file);
+    const stdout = bw.writer();
+    for (args.items) |arg| {
+        if (std.mem.startsWith(u8, arg, "--typed=")) {
+            const skip = "--typed=".len;
+            const typed = arg[skip..];
+            if (std.mem.eql(u8, "simple", typed)) {
+                flags.simple_typed = true;
+            } else {
+                try stdout.print("ERROR: typesystem '{s}' is not defined\n", .{typed});
+                try stdout.print("     please use any of these:\n", .{});
+                try stdout.print("     simple\n", .{});
+                try bw.flush();
+                return error.UnsupportedType;
+            }
+        }
+    }
+
+    return flags;
+}
+
 pub fn main() !void {
     const stdout_file = std.io.getStdOut().writer();
     var bw = std.io.bufferedWriter(stdout_file);
@@ -31,7 +59,12 @@ pub fn main() !void {
     defer tokens.deinit();
 
     try collectArgs(&args);
+    const flags = try argsToFlags(args);
     var cwd = std.fs.cwd();
+
+    if (flags.simple_typed) {
+        return error.NotImplemented;
+    }
 
     for (args.items[1..]) |arg| {
         cwd.access(arg, std.fs.File.OpenFlags{ .mode = .read_only }) catch |err| {
