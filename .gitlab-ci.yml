@@ -33,12 +33,14 @@ build-job:       # This job runs in the build stage, which runs first.
   <<: *zig_config
   stage: build
   script:
+    - pip install ziglang
     - zig build
 
 unit-test-job:   # This job runs in the test stage.
   stage: test    # It only starts when the job in the build stage completes successfully.
   <<: *zig_config
   script:
+    - pip install ziglang
     - zig build test
   timeout: 1 min
 
@@ -48,6 +50,7 @@ example-test-job:   # This job also runs in the test stage.
   needs:
     - build-job
   script:
+    - pip install ziglang
     - zig build run -- lambd/test.txt
   timeout: 1 min
 
@@ -57,5 +60,6 @@ bool-test-job:   # This job also runs in the test stage.
   needs:
     - build-job
   script:
+    - pip install ziglang
     - zig build run -- lambd/bool.txt
   timeout: 1 min
