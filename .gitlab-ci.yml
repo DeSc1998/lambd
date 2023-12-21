@@ -18,13 +18,16 @@
 
 .job_template: &zig_config
   image: python
-  script:
-    - pip install ziglang
-    - zig version
 
 stages:          # List of stages for jobs, and their order of execution
   - build
   - test
+
+.pre:
+  <<: *zig_config
+  script:
+    - pip install ziglang
+    - zig version
 
 build-job:       # This job runs in the build stage, which runs first.
   <<: *zig_config
