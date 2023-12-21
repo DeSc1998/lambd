@@ -19,14 +19,14 @@ build-job:
   stage: build
   script:
     - pip install --user ziglang
-    - python -m ziglang -- build
+    - python -m ziglang build
 
 unit-test-job:   
   stage: test    
   <<: *zig_config
   script:
     - pip install --user ziglang
-    - python -m ziglang -- build test
+    - python -m ziglang build test
   timeout: 1 min
 
 example-test-job:
@@ -36,7 +36,7 @@ example-test-job:
     - build-job
   script:
     - pip install --user ziglang
-    - python -m ziglang -- build run -- lambd/test.txt
+    - python -m ziglang build run -- lambd/test.txt
   timeout: 1 min
 
 bool-test-job:   
@@ -46,5 +46,5 @@ bool-test-job:
     - build-job
   script:
     - pip install --user ziglang
-    - python -m ziglang -- build run -- lambd/bool.txt
+    - python -m ziglang build run -- lambd/bool.txt
   timeout: 1 min
